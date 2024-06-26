@@ -30,30 +30,23 @@ if ($marcasStmt === false) {
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-<div class="container mt-4">
-        <h2>Productos</h2>
-      
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="catalogoSelect">Catálogos:</label>
-                <select id="catalogoSelect" class="form-select"  aria-label="Catálogos">
-                </select>
-            </div>
-
-            <div class="col-md-6 mb-3">
-                <label for="marcasSelect">Marcas:</label>
-                <select id="marcasSelect" class="form-select" aria-label="Marcas">
-                    
-                </select>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Productos</h2>
+            <div class="form-inline">
+                <div class="form-group mr-2">
+                    <label for="catalogoSelect" class="mr-2">Catálogos:</label>
+                    <select id="catalogoSelect" class="form-control"></select>
+                </div>
+                <div class="form-group">
+                    <label for="marcasSelect" class="mr-2">Marcas:</label>
+                    <select id="marcasSelect" class="form-control"></select>
+                </div>
             </div>
         </div>
-        
         <div class="mb-3">
             <button class="btn btn-primary" data-toggle="modal" data-target="#agregarModal">Agregar nuevo</button>
-
         </div>
-        
-        
         <table class="table">
             <thead class="thead-dark">
                 <tr>
@@ -63,9 +56,9 @@ if ($marcasStmt === false) {
                     <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="productosTableBody">
                 <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) { ?>
-                    <tr>
+                    <tr id="producto-<?php echo $row['id']; ?>">
                         <td><?php echo $row['nombre']; ?></td>
                         <td><?php echo $row['nombrePadre']; ?></td>
                         <td><?php echo $row['descripcion']; ?></td>
@@ -123,7 +116,7 @@ if ($marcasStmt === false) {
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
-                </div> 
+                </div>
                 <div class="modal-body">
                     ¿Estás seguro de que deseas eliminar este producto?
                 </div>
@@ -206,11 +199,9 @@ if ($marcasStmt === false) {
             window.location.href = deleteUrl;
         });
 
-        document.getElementById('addProductForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
+        document.getElementById('addProductForm').addEventListener('submit', function(event) {
+            event.preventDefault();
             const formData = new FormData(this);
-
             fetch('create.php', {
                 method: 'POST',
                 body: formData
@@ -219,6 +210,18 @@ if ($marcasStmt === false) {
             .then(data => {
                 if (data.success) {
                     $('#agregarModal').modal('hide');
+                    const newRow = document.createElement('tr');
+                    newRow.id = 'producto-' + data.id;
+                    newRow.innerHTML = `
+                        <td>${data.nombre}</td>
+                        <td>${data.nombrePadre}</td>
+                        <td>${data.descripcion}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" data-toggle="modal" data-target="#editarModal${data.id}">Editar</button>
+                            <button class="btn btn-sm btn-danger ml-1" onclick="confirmDelete(${data.id})">Eliminar</button>
+                        </td>
+                    `;
+                    document.getElementById('productosTableBody').appendChild(newRow);
                     updateSelects();
                 } else {
                     alert('Error al agregar producto');
